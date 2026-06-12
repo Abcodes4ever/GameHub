@@ -2,11 +2,6 @@ import { supabase } from './supabaseClient';
 import { useState, useEffect, useRef, useCallback } from "react";
 
 // ─────────────────────────────────────────────
-// In-memory "database" (persisted via localStorage)
-// ─────────────────────────────────────────────
-const DB_KEY = "gamehub_db";
-
-// ─────────────────────────────────────────────
 // Built-in sample games
 // ─────────────────────────────────────────────
 const SAMPLE_GAMES = [
@@ -133,11 +128,18 @@ function SnakeGame({ onScore, onClose }) {
   });
 
   const placeFood = (snake) => {
-    let pos;
-    do {
-      pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
-    } while (snake.some(s => s.x === pos.x && s.y === pos.y));
-    return pos;
+    while (true) {
+      const pos = {
+        x: Math.floor(Math.random() * COLS),
+        y: Math.floor(Math.random() * ROWS),
+      };
+
+      const occupied = snake.some(
+        segment => segment.x === pos.x && segment.y === pos.y
+      );
+
+      if (!occupied) return pos;
+    }
   };
 
   const draw = useCallback(() => {
@@ -412,6 +414,21 @@ function btnStyle(variant) {
 // Main App
 // ─────────────────────────────────────────────
 export default function GameHub() {
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center"
+        }}
+      >
+        Loading...
+      </div>
+    );
+  }
+
   const [db, setDb] = useState({ games: [], players: [], scores: [], /* keep achievements hardcoded */ });
   const [loading, setLoading] = useState(true);
   const [adminUnlocked, setAdminUnlocked] = useState(false);
@@ -483,7 +500,7 @@ export default function GameHub() {
 
     if (toEarn.length > 0) {
       const updates = toEarn.map(id => ({ playerId, achievementId: id, earnedAt: new Date().toISOString() }));
-      const updatedDb = { ...newDb, player_achievements: [...newDb.player_achievements, ...updates] };
+      supabase.from('player_achievements').insert(updates); // !!!
       toEarn.forEach(id => {
         const ach = newDb.achievements.find(a => a.id === id);
         if (ach) showToast(`🏆 Achievement: ${ach.title}!`, "achievement");
@@ -522,11 +539,6 @@ export default function GameHub() {
     scoreSDK.submitScore(selectedGame.id, score);
     setLastScore(score);
     showToast(`Score ${score} submitted!`);
-  };
-
-  const handleExitGame = () => {
-    setView("game");
-    setSelectedGame(null);
   };
 
   // AI game manifest generator
