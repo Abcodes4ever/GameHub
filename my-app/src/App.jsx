@@ -414,20 +414,6 @@ function btnStyle(variant) {
 // Main App
 // ─────────────────────────────────────────────
 export default function GameHub() {
-  if (loading) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center"
-        }}
-      >
-        Loading...
-      </div>
-    );
-  }
 
   const [db, setDb] = useState({ games: [], players: [], scores: [], /* keep achievements hardcoded */ });
   const [loading, setLoading] = useState(true);
@@ -642,6 +628,16 @@ export default function GameHub() {
   const myAchievements = playerObj ? db.player_achievements.filter(pa => pa.playerId === playerObj.id) : [];
 
   // ─── Render ───
+  // ─── Render ───
+  if (loading) return (
+    <div style={{ minHeight: "100vh", background: T.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center", color: T.muted }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🎮</div>
+        <p>Loading GameHub...</p>
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "system-ui, sans-serif" }}>
       {/* Toast */}
